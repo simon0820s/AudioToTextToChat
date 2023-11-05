@@ -1,33 +1,20 @@
-import speech_recognition as sr
-import openai
+from flask import Flask, request, jsonify
+from model import useModels
+from prepareAudio import useConverter
 
-def useModels(audio):
-  text = useRecognizer(audio)
-  print(text)
-  response = useGPT(text)
-  print(response)
-  
+app = Flask(__name__)
 
-def useRecognizer(audio):
 
-  r = sr.Recognizer()
+@app.route("/", methods=["POST"])
+def upload():
+    data = request.get_json()
 
-  with audio as source:
-    audio_to_analyze = r.record(source)
+    audio_b64 = data.get("audio")
 
-  text = r.recognize_google(audio_to_analyze, language='es')
+    audioWav = useConverter(audio_b64)
 
-  return text
+    response = useModels(audioWav)
 
-def useGPT(text):
-  text = "que piensas acerca de lo siguiente: " + text + "?"
-  response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    prompt=(text)
 
-)
-  return response
-
-if __name__=='__main__':
-  audio = sr.AudioFile('luisAudio.wav')
-  useModels(audio)
+if __name__ == "__main__":
+    app.run(debug=True, port=2809, host="0.0.0.0")
